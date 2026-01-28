@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SonarQube Java 규칙</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" alt="Java" class="java-logo">
+        <h2>Java 규칙</h2>
+      </div>
+      <nav class="filter-list">
+        <div class="filter-section">
+          <h3>유형</h3>
+          <label class="filter-checkbox">
+            <input type="checkbox" checked data-type="vulnerability">
+            <span class="type-icon vulnerability">🛡️</span> 취약점
+            <span class="filter-count" id="count-vulnerability">0</span>
+          </label>
+          <label class="filter-checkbox">
+            <input type="checkbox" checked data-type="bug">
+            <span class="type-icon bug">🐛</span> 버그
+            <span class="filter-count" id="count-bug">0</span>
+          </label>
+          <label class="filter-checkbox">
+            <input type="checkbox" checked data-type="security-hotspot">
+            <span class="type-icon security-hotspot">🔥</span> 보안 핫스팟
+            <span class="filter-count" id="count-security-hotspot">0</span>
+          </label>
+          <label class="filter-checkbox">
+            <input type="checkbox" checked data-type="code-smell">
+            <span class="type-icon code-smell">👃</span> 코드 스멜
+            <span class="filter-count" id="count-code-smell">0</span>
+          </label>
+        </div>
+        <div class="filter-section">
+          <h3>심각도</h3>
+          <label class="filter-checkbox">
+            <input type="checkbox" checked data-severity="blocker">
+            <span class="severity-dot blocker"></span> Blocker
+            <span class="filter-count" id="count-blocker">0</span>
+          </label>
+          <label class="filter-checkbox">
+            <input type="checkbox" checked data-severity="critical">
+            <span class="severity-dot critical"></span> Critical
+            <span class="filter-count" id="count-critical">0</span>
+          </label>
+          <label class="filter-checkbox">
+            <input type="checkbox" checked data-severity="major">
+            <span class="severity-dot major"></span> Major
+            <span class="filter-count" id="count-major">0</span>
+          </label>
+          <label class="filter-checkbox">
+            <input type="checkbox" checked data-severity="minor">
+            <span class="severity-dot minor"></span> Minor
+            <span class="filter-count" id="count-minor">0</span>
+          </label>
+          <label class="filter-checkbox">
+            <input type="checkbox" checked data-severity="info">
+            <span class="severity-dot info"></span> Info
+            <span class="filter-count" id="count-info">0</span>
+          </label>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="content-header">
+        <div class="header-title">
+          <h1>Java 정적 코드 분석</h1>
+          <p id="ruleCountSummary">695개의 규칙으로 Java 코드의 버그, 취약점, 보안 핫스팟, 코드 스멜을 찾습니다</p>
+        </div>
+      </header>
+
+      <!-- Search & Filter Bar -->
+      <div class="filters">
+        <div class="search-box">
+          <input type="text" placeholder="규칙 검색..." id="searchInput">
+          <span class="search-icon">🔍</span>
+        </div>
+        <div class="result-info">
+          <span id="filteredCount">695</span>개 규칙
+        </div>
+      </div>
+
+      <!-- Rules Container -->
+      <div class="rules-container">
+        <!-- Rules List -->
+        <div class="rules-list-container">
+          <div class="rules-grid" id="rulesGrid">
+            <!-- Rules will be inserted here by JavaScript -->
+          </div>
+
+          <!-- Pagination -->
+          <div class="pagination" id="pagination">
+            <!-- Pagination will be inserted here by JavaScript -->
+          </div>
+        </div>
+
+        <!-- Rule Detail Panel -->
+        <div class="rule-detail" id="ruleDetail">
+          <div class="detail-placeholder">
+            <div class="placeholder-icon">📋</div>
+            <p>규칙을 선택하면 상세 정보가 표시됩니다</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="rules_data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
