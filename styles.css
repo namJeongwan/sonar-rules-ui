@@ -576,15 +576,32 @@ body {
   border: 1px solid #e1e4e8;
 }
 
+.tab-content pre code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-family: 'Fira Code', 'Monaco', 'Menlo', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .tab-content code {
   font-family: 'Fira Code', 'Monaco', 'Menlo', monospace;
   font-size: 13px;
 }
 
-.tab-content p code {
+.tab-content p code,
+.tab-content li code {
   background: #f0f0f0;
   padding: 2px 6px;
   border-radius: 4px;
+  font-size: 12px;
+}
+
+/* highlight.js overrides to match our theme */
+.tab-content pre code.hljs {
+  background: transparent;
+  padding: 0;
 }
 
 /* Code block styling */

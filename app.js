@@ -47,6 +47,23 @@ const tierNames = {
   'skip': '스킵'
 };
 
+// Configure marked.js
+marked.setOptions({
+  gfm: true,
+  breaks: true,
+  highlight: function(code, lang) {
+    if (lang && hljs.getLanguage(lang)) {
+      return hljs.highlight(code, { language: lang }).value;
+    }
+    // Auto-detect Java for unlabeled code blocks
+    try {
+      return hljs.highlight(code, { language: 'java' }).value;
+    } catch {
+      return code;
+    }
+  }
+});
+
 // Load rules from embedded data or JSON file
 async function loadRules() {
   rulesGrid.innerHTML = `
@@ -356,9 +373,12 @@ function selectRule(ruleId) {
   document.querySelectorAll('.detail-tab').forEach(tab => {
     tab.addEventListener('click', () => switchTab(tab.dataset.tab));
   });
+
+  // Apply syntax highlighting
+  highlightCodeBlocks();
 }
 
-// Process HTML content (translate common phrases)
+// Process HTML content — handles both raw HTML and markdown
 function processHtmlContent(html) {
   if (!html) return '';
 
@@ -383,7 +403,32 @@ function processHtmlContent(html) {
     result = result.replace(new RegExp(eng, 'gi'), kor);
   }
 
+  // If content looks like markdown (no HTML tags at start), convert with marked
+  const isMarkdown = !result.trim().startsWith('<');
+  if (isMarkdown) {
+    result = marked.parse(result);
+  }
+
   return result;
+}
+
+// Apply syntax highlighting to all <pre><code> and bare <pre> blocks in detail panel
+function highlightCodeBlocks() {
+  ruleDetail.querySelectorAll('pre').forEach(pre => {
+    const code = pre.querySelector('code');
+    if (code) {
+      // Already wrapped in <code>, highlight directly
+      hljs.highlightElement(code);
+    } else {
+      // Bare <pre> — wrap content in <code> then highlight
+      const codeEl = document.createElement('code');
+      codeEl.className = 'language-java';
+      codeEl.textContent = pre.textContent;
+      pre.textContent = '';
+      pre.appendChild(codeEl);
+      hljs.highlightElement(codeEl);
+    }
+  });
 }
 
 // Switch tab
@@ -395,6 +440,9 @@ function switchTab(tabId) {
     content.classList.remove('active');
   });
   document.getElementById(`tab-${tabId}`).classList.add('active');
+
+  // Re-apply highlighting for newly visible tab
+  highlightCodeBlocks();
 }
 
 // Initialize
