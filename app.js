@@ -39,6 +39,14 @@ const severityNames = {
   'info': 'Info'
 };
 
+// Tier names and icons
+const tierNames = {
+  '1': '필수',
+  '2': '권장',
+  '3': '선택',
+  'skip': '스킵'
+};
+
 // Load rules from embedded data or JSON file
 async function loadRules() {
   rulesGrid.innerHTML = `
@@ -74,23 +82,38 @@ async function loadRules() {
 
 // Update filter counts based on active filters
 function updateCounts() {
-  const { types, severities } = getActiveFilters();
+  const { types, severities, tiers } = getActiveFilters();
 
-  // Type counts - filtered by selected severities
   const typeCounts = {};
-  // Severity counts - filtered by selected types
   const severityCounts = {};
+  const tierCounts = {};
 
   rules.forEach(rule => {
-    // Count types: if no severity filter OR rule matches selected severities
-    if (severities.length === 0 || severities.includes(rule.severity)) {
+    const tier = rule.tier || '3';
+
+    // Tier counts: filtered by types + severities
+    if ((types.length === 0 || types.includes(rule.type)) &&
+        (severities.length === 0 || severities.includes(rule.severity))) {
+      tierCounts[tier] = (tierCounts[tier] || 0) + 1;
+    }
+
+    // Type counts: filtered by severities + tiers
+    if ((severities.length === 0 || severities.includes(rule.severity)) &&
+        (tiers.length === 0 || tiers.includes(tier))) {
       typeCounts[rule.type] = (typeCounts[rule.type] || 0) + 1;
     }
 
-    // Count severities: if no type filter OR rule matches selected types
-    if (types.length === 0 || types.includes(rule.type)) {
+    // Severity counts: filtered by types + tiers
+    if ((types.length === 0 || types.includes(rule.type)) &&
+        (tiers.length === 0 || tiers.includes(tier))) {
       severityCounts[rule.severity] = (severityCounts[rule.severity] || 0) + 1;
     }
+  });
+
+  // Update DOM - tier counts
+  ['1', '2', '3', 'skip'].forEach(tier => {
+    const el = document.getElementById(`count-tier-${tier}`);
+    if (el) el.textContent = tierCounts[tier] || 0;
   });
 
   // Update DOM - type counts
@@ -110,6 +133,7 @@ function updateCounts() {
 function getActiveFilters() {
   const types = [];
   const severities = [];
+  const tiers = [];
 
   document.querySelectorAll('[data-type]:checked').forEach(cb => {
     types.push(cb.dataset.type);
@@ -119,24 +143,30 @@ function getActiveFilters() {
     severities.push(cb.dataset.severity);
   });
 
-  return { types, severities };
+  document.querySelectorAll('[data-tier]:checked').forEach(cb => {
+    tiers.push(cb.dataset.tier);
+  });
+
+  return { types, severities, tiers };
 }
 
 // Apply filters
 function applyFilters() {
-  const { types, severities } = getActiveFilters();
+  const { types, severities, tiers } = getActiveFilters();
   const searchTerm = searchInput.value.toLowerCase().trim();
 
   filteredRules = rules.filter(rule => {
     const matchesType = types.length === 0 || types.includes(rule.type);
     const matchesSeverity = severities.length === 0 || severities.includes(rule.severity);
+    const matchesTier = tiers.length === 0 || tiers.includes(rule.tier || '3');
     const matchesSearch = searchTerm === '' ||
       rule.name.toLowerCase().includes(searchTerm) ||
       (rule.name_ko && rule.name_ko.toLowerCase().includes(searchTerm)) ||
       rule.id.toLowerCase().includes(searchTerm) ||
+      (rule.description && rule.description.toLowerCase().includes(searchTerm)) ||
       rule.tags.some(tag => tag.toLowerCase().includes(searchTerm));
 
-    return matchesType && matchesSeverity && matchesSearch;
+    return matchesType && matchesSeverity && matchesTier && matchesSearch;
   });
 
   currentPage = 1;
@@ -183,11 +213,14 @@ function renderRules() {
     return;
   }
 
-  rulesGrid.innerHTML = pageRules.map(rule => `
+  rulesGrid.innerHTML = pageRules.map(rule => {
+    const tier = rule.tier || '3';
+    return `
     <div class="rule-card ${selectedRuleId === rule.id ? 'active' : ''}" data-id="${rule.id}">
       <div class="rule-card-header">
         <span class="rule-type-icon ${rule.type}">${typeIcons[rule.type] || '📋'}</span>
         <span class="rule-id">${rule.id}</span>
+        <span class="tier-badge tier-${tier}" title="추천 등급: ${tierNames[tier] || tier}">${tier === 'skip' ? '—' : tier}</span>
       </div>
       <div class="rule-title">${rule.name_ko || rule.name}</div>
       <div class="rule-meta">
@@ -195,7 +228,8 @@ function renderRules() {
         <span class="rule-tags">${rule.tags.slice(0, 3).map(t => '#' + t).join(' ')}</span>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   // Add click listeners
   document.querySelectorAll('.rule-card').forEach(card => {
@@ -280,17 +314,33 @@ function selectRule(ruleId) {
   const howToFixContent = rule.howToFix_ko || rule.howToFix || '<p>수정 방법 정보가 없습니다.</p>';
   const moreInfoContent = rule.moreInfo_ko || rule.moreInfo || '<p>추가 정보가 없습니다.</p>';
 
+  // Tier info
+  const tier = rule.tier || '3';
+  const tierLabel = tierNames[tier] || tier;
+  const aiDesc = rule.description || '';
+
   // Render detail
   ruleDetail.innerHTML = `
     <div class="detail-header">
       <div class="rule-card-header">
         <span class="rule-type-icon ${rule.type}">${typeIcons[rule.type] || '📋'}</span>
         <span class="severity-badge ${rule.severity}">${severityNames[rule.severity] || rule.severity}</span>
+        <span class="tier-badge tier-${tier}">${tier === 'skip' ? '—' : tier}</span>
         <span style="margin-left: auto; color: #888; font-size: 12px;">${typeNames[rule.type] || rule.type}</span>
       </div>
       <h2>${rule.name_ko || rule.name}</h2>
       <span class="rule-id">${rule.id}</span>
       ${rule.name_ko ? `<p style="font-size: 12px; color: #888; margin-top: 4px;">${rule.name}</p>` : ''}
+      ${aiDesc ? `
+      <div class="ai-recommendation tier-${tier}">
+        <div class="ai-recommendation-header">
+          <span class="ai-icon">🤖</span>
+          <span class="ai-label">Claude Comment</span>
+          <span class="ai-tier">Tier ${tier === 'skip' ? 'Skip' : tier} — ${tierLabel}</span>
+        </div>
+        <p class="ai-recommendation-text">${aiDesc}</p>
+      </div>
+      ` : ''}
     </div>
     <div class="detail-tabs">
       <button class="detail-tab active" data-tab="why">왜 문제인가요?</button>
